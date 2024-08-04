@@ -1,0 +1,56 @@
+definitions:
+  types.Message:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      isSent:
+        type: boolean
+      to:
+        type: string
+    type: object
+  types.Response:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/types.Message'
+        type: array
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /sent-messages:
+    get:
+      description: Retrieves all messages that have been sent
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Retrieve sent messages
+      tags:
+      - Messages
+  /start-stop:
+    get:
+      description: Starts a scheduler to send messages every 10 seconds, or stops
+        it if it's already running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Start or stop the message sending scheduler
+      tags:
+      - Scheduler
+swagger: "2.0"

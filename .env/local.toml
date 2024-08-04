@@ -1,0 +1,13 @@
+appname = "message-system"
+port = 8080
+
+[mongodbConfig]
+uri = "mongodb://localhost:27017"
+database = "system"
+collection = "messages"
+
+[redisConfig]
+uri = "localhost:6379"
+
+[webhookConfig]
+baseurl = "https://webhook.site/914600cd-0240-4267-9f3d-0dd91c33d6d9"
