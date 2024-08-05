@@ -18,3 +18,4 @@ curl --location 'http://localhost:8080/sent-messages'
 ```
 
 ## Project Architecture
+![architecture](system.png)

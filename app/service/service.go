@@ -3,24 +3,35 @@ package service
 import (
 	"context"
 	"log"
-	"message-system/app/cache/redis"
-	"message-system/app/client"
 	"message-system/app/constants"
 	"message-system/app/domain"
-	"message-system/app/repository/mongodb"
 	"message-system/app/types"
 	"time"
 )
 
-type Service struct {
-	cache      *redis.Cache
-	client     *client.WebhookClient
-	repository *mongodb.MessageRepository
+type CacheService interface {
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 }
 
-func NewService(cache *redis.Cache,
-	client *client.WebhookClient,
-	repository *mongodb.MessageRepository) *Service {
+type WebhookClient interface {
+	SendMessage(ctx context.Context, message *domain.Message) (*types.MessageResponse, error)
+}
+
+type MessageRepository interface {
+	GetUnsentMessages(ctx context.Context, limit int) ([]domain.Message, error)
+	GetSentMessages(ctx context.Context) ([]domain.Message, error)
+	MarkAsSent(ctx context.Context, id int) error
+}
+
+type Service struct {
+	cache      CacheService
+	client     WebhookClient
+	repository MessageRepository
+}
+
+func NewService(cache CacheService,
+	client WebhookClient,
+	repository MessageRepository) *Service {
 	return &Service{
 		cache:      cache,
 		client:     client,
@@ -33,6 +44,7 @@ func (s *Service) StartSending() {
 	messages, err := s.repository.GetUnsentMessages(ctx, constants.MessageLimit)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 
 	for _, message := range messages {
@@ -40,16 +52,19 @@ func (s *Service) StartSending() {
 		response, err := s.client.SendMessage(ctx, &message)
 		if err != nil {
 			log.Println(constants.ErrorSendingMessages)
+			return
 		}
 
 		err = s.repository.MarkAsSent(ctx, message.ID)
 		if err != nil {
 			log.Println(constants.ErrorMarkingMessages)
+			return
 		}
 
 		err = s.cache.Set(ctx, response.Message, startTime.GoString(), time.Hour)
 		if err != nil {
 			log.Println(constants.ErrorCachingMessages)
+			return
 		}
 	}
 }

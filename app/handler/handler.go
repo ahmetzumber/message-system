@@ -1,16 +1,19 @@
 package handler
 
 import (
-	"message-system/app/constants"
-	"message-system/app/service"
-	"message-system/app/types"
-	"net/http"
-	"sync"
-
+	"context"
 	"github.com/jasonlvhit/gocron"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"message-system/app/constants"
+	"message-system/app/types"
+	"net/http"
 )
+
+type Service interface {
+	StartSending()
+	GetSentMessages(ctx context.Context) ([]types.Message, error)
+}
 
 // @title Message System API
 // @version 1.0
@@ -19,14 +22,13 @@ import (
 // @BasePath /api
 var (
 	scheduler *gocron.Scheduler
-	mutex     sync.Mutex
 )
 
 type Handler struct {
-	service *service.Service
+	service Service
 }
 
-func NewHandler(service *service.Service) *Handler {
+func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
@@ -58,7 +60,7 @@ func (h *Handler) StartStopSending(c echo.Context) error {
 	}
 
 	scheduler = gocron.NewScheduler()
-	scheduler.Every(10).
+	scheduler.Every(5).
 		Second().
 		Do(h.service.StartSending)
 	scheduler.Start()

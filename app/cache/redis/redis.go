@@ -24,7 +24,7 @@ func NewCache(config *config.RedisConfig) *Cache {
 	}
 }
 
-func (c *Cache) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+func (c Cache) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	status := c.Client.Set(ctx, key, value, expiration)
 	return status.Err()
 }
